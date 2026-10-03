@@ -44,6 +44,8 @@ def validate_order(
             return f"line {number}: qty must be greater than zero"
         if not is_int(line["unit_price_kopecks"]):
             return f"line {number}: unit_price_kopecks must be a whole number"
+        if int(line["unit_price_kopecks"]) < 0:
+            return f"line {number}: unit_price_kopecks must not be negative"
     return None
 
 
