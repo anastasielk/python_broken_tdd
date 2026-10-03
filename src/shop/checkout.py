@@ -50,10 +50,14 @@ def validate_order(
     """Return a human readable reason why the order is invalid, or None if it is fine."""
     if not lines:
         return "order has no lines"
+    seen_skus: set[str] = set()
     for number, line in enumerate(lines, start=1):
         reason = validate_line(number, line)
         if reason is not None:
             return reason
+        if line["sku"] in seen_skus:
+            return f"line {number}: sku {line['sku']!r} is repeated"
+        seen_skus.add(line["sku"])
     return None
 
 
