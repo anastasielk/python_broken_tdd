@@ -82,5 +82,7 @@ def calculate_order_total(
     for threshold, tier_percent in TIER_DISCOUNTS:
         if units >= threshold:
             discount_percent = tier_percent
+    # An empty promo code means "no code"; unknown codes were already rejected by validation.
+    discount_percent = max(discount_percent, PROMO_CODES.get(promo_code, 0))
     discounted_subtotal = subtotal - percent_of(subtotal, discount_percent)
     return discounted_subtotal + percent_of(discounted_subtotal, VAT_PERCENT)
