@@ -24,6 +24,24 @@ def is_int(value: str) -> bool:
     return digits.isdecimal()
 
 
+def validate_line(number: int, line: dict[str, str]) -> str | None:
+    """Return the reason why one order line is invalid, or None if it is fine."""
+    for key in REQUIRED_LINE_KEYS:
+        if key not in line:
+            return f"line {number} is missing key {key!r}"
+    if not line["sku"]:
+        return "sku must not be empty"
+    if not is_int(line["qty"]):
+        return f"line {number}: qty must be a whole number"
+    if int(line["qty"]) <= 0:
+        return f"line {number}: qty must be greater than zero"
+    if not is_int(line["unit_price_kopecks"]):
+        return f"line {number}: unit_price_kopecks must be a whole number"
+    if int(line["unit_price_kopecks"]) < 0:
+        return f"line {number}: unit_price_kopecks must not be negative"
+    return None
+
+
 def validate_order(
     lines: list[dict[str, str]],
     promo_code: str = "",
@@ -33,19 +51,9 @@ def validate_order(
     if not lines:
         return "order has no lines"
     for number, line in enumerate(lines, start=1):
-        for key in REQUIRED_LINE_KEYS:
-            if key not in line:
-                return f"line {number} is missing key {key!r}"
-        if not line["sku"]:
-            return "sku must not be empty"
-        if not is_int(line["qty"]):
-            return f"line {number}: qty must be a whole number"
-        if int(line["qty"]) <= 0:
-            return f"line {number}: qty must be greater than zero"
-        if not is_int(line["unit_price_kopecks"]):
-            return f"line {number}: unit_price_kopecks must be a whole number"
-        if int(line["unit_price_kopecks"]) < 0:
-            return f"line {number}: unit_price_kopecks must not be negative"
+        reason = validate_line(number, line)
+        if reason is not None:
+            return reason
     return None
 
 
