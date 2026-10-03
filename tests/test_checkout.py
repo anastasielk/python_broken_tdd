@@ -29,57 +29,70 @@ def test_smoke_single_line_without_delivery() -> None:
 
 def test_empty_order_is_rejected() -> None:
     """Spec 3, rule 1: an order without lines cannot be processed."""
-    ...
+    reason = validate_order([])
+    assert isinstance(reason, str) and reason
+    assert calculate_order_total([]) is None
 
 
 def test_empty_sku_is_rejected() -> None:
     """Spec 3, rule 2: a blank article code is not allowed."""
-    ...
+    reason = validate_order([line(sku="")])
+    assert isinstance(reason, str) and reason
 
 
 def test_missing_line_key_is_rejected() -> None:
     """Spec 3, rule 3: every required key must be present."""
-    ...
+    order_line = line()
+    del order_line["qty"]
+    reason = validate_order([order_line])
+    assert isinstance(reason, str) and reason
 
 
 def test_non_numeric_quantity_is_rejected() -> None:
     """Spec 3, rule 4: `qty` must be a whole number."""
-    ...
+    reason = validate_order([line(qty="notnum")])
+    assert isinstance(reason, str) and reason
 
 
 def test_zero_quantity_is_rejected() -> None:
     """Spec 3, rule 5: `qty` must be greater than zero."""
-    ...
+    reason = validate_order([line(qty="0")])
+    assert isinstance(reason, str) and reason
 
 
 def test_non_numeric_price_is_rejected() -> None:
     """Spec 3, rule 6: `unit_price_kopecks` must be a whole number."""
-    ...
+    reason = validate_order([line(unit_price_kopecks="notnum")])
+    assert isinstance(reason, str) and reason
 
 
 def test_negative_price_is_rejected() -> None:
     """Spec 3, rule 7: a price may not be negative."""
-    ...
+    reason = validate_order([line(unit_price_kopecks="-1")])
+    assert isinstance(reason, str) and reason
 
 
 def test_duplicate_sku_is_rejected() -> None:
     """Spec 3, rule 8: the same article may appear only once."""
-    ...
+    reason = validate_order([line(sku="SKU-1"), line(sku="SKU-1")])
+    assert isinstance(reason, str) and reason
 
 
 def test_unknown_promo_code_is_rejected() -> None:
     """Spec 3, rule 9: only codes from PROMO_CODES exist."""
-    ...
+    reason = validate_order([line()], promo_code="NO-SUCH-CODE")
+    assert isinstance(reason, str) and reason
 
 
 def test_unsupported_city_is_rejected() -> None:
     """Spec 3, rule 10: only cities from SUPPORTED_CITIES are served."""
-    ...
+    reason = validate_order([line()], shipping_city="atlantis")
+    assert isinstance(reason, str) and reason
 
 
 def test_valid_order_passes_validation() -> None:
     """Spec 3: a good order gets None back instead of a reason."""
-    ...
+    assert validate_order([line()], promo_code="WELCOME10", shipping_city="msk") is None
 
 
 def test_no_discount_below_first_tier() -> None:
