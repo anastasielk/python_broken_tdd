@@ -67,6 +67,25 @@ def validate_order(
     return None
 
 
+def discount_percent(units: int, promo_code: str) -> int:
+    """Return the discount percent for a valid order: the better of tier and promo, capped."""
+    tier_percent = 0
+    # Thresholds are sorted ascending, so the last match is the highest one, as the spec requires.
+    for threshold, percent in TIER_DISCOUNTS:
+        if units >= threshold:
+            tier_percent = percent
+    # An empty promo code means "no code"; unknown codes were already rejected by validation.
+    best_percent = max(tier_percent, PROMO_CODES.get(promo_code, 0))
+    return min(best_percent, MAX_DISCOUNT_PERCENT)
+
+
+def shipping_kopecks(shipping_city: str, discounted_subtotal: int) -> int:
+    """Return the delivery charge; an empty city means self-pickup."""
+    if shipping_city and discounted_subtotal < FREE_DELIVERY_FROM_KOPEKS:
+        return SHIPPING_KOPEKS
+    return 0
+
+
 def calculate_order_total(
     lines: list[dict[str, str]],
     promo_code: str = "",
@@ -77,17 +96,6 @@ def calculate_order_total(
         return None
     subtotal = sum(int(line["qty"]) * int(line["unit_price_kopecks"]) for line in lines)
     units = sum(int(line["qty"]) for line in lines)
-    discount_percent = 0
-    # Thresholds are sorted ascending, so the last match is the highest one, as the spec requires.
-    for threshold, tier_percent in TIER_DISCOUNTS:
-        if units >= threshold:
-            discount_percent = tier_percent
-    # An empty promo code means "no code"; unknown codes were already rejected by validation.
-    discount_percent = max(discount_percent, PROMO_CODES.get(promo_code, 0))
-    discount_percent = min(discount_percent, MAX_DISCOUNT_PERCENT)
-    discounted_subtotal = subtotal - percent_of(subtotal, discount_percent)
-    shipping = 0
-    if shipping_city and discounted_subtotal < FREE_DELIVERY_FROM_KOPEKS:
-        shipping = SHIPPING_KOPEKS
-    base = discounted_subtotal + shipping
+    discounted_subtotal = subtotal - percent_of(subtotal, discount_percent(units, promo_code))
+    base = discounted_subtotal + shipping_kopecks(shipping_city, discounted_subtotal)
     return base + percent_of(base, VAT_PERCENT)
