@@ -58,6 +58,8 @@ def validate_order(
         if line["sku"] in seen_skus:
             return f"line {number}: sku {line['sku']!r} is repeated"
         seen_skus.add(line["sku"])
+    if promo_code and promo_code not in PROMO_CODES:
+        return f"unknown promo code {promo_code!r}"
     return None
 
 
